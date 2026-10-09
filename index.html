@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kraepelin Test Simulator - Simulasi Psikotes Kerja Realistis</title>
+    <meta name="description"
+        content="Simulasi Tes Kraepelin online gratis untuk persiapan psikotes kerja perusahaan. Fitur 50 lajur, timer otomatis 15 detik per kolom, kurva kerja psikogram, dan analisis akurasi komprehensif.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Application CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="dark-theme">
+
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-brain"></i>
+                </div>
+                <div class="brand-text">
+                    <h1>Kraepelin<span>Sim</span></h1>
+                    <span class="badge">Psikotes Simulator</span>
+                </div>
+            </div>
+
+            <!-- In-Test Header Stats Bar (Visible during test) -->
+            <div id="testStatsHeader" class="test-header-stats hidden">
+                <div class="stat-pill">
+                    <span class="stat-label"><i class="fa-solid fa-table-columns"></i> Lajur:</span>
+                    <span id="headerColumnIndex" class="stat-value text-accent">1 / 50</span>
+                </div>
+                <div class="stat-pill timer-pill">
+                    <span class="stat-label"><i class="fa-solid fa-stopwatch"></i> Lajur Timer:</span>
+                    <span id="headerColumnTimer" class="stat-value text-timer">15s</span>
+                    <div class="timer-bar-container">
+                        <div id="headerTimerBar" class="timer-bar-fill"></div>
+                    </div>
+                </div>
+                <div class="stat-pill">
+                    <span class="stat-label"><i class="fa-solid fa-clock"></i> Sisa Waktu:</span>
+                    <span id="headerTotalTimer" class="stat-value">12:30</span>
+                </div>
+            </div>
+
+            <!-- Header Controls -->
+            <div class="header-controls">
+                <button id="soundToggleBtn" class="icon-btn" title="Suara Off/On">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+                <button id="themeToggleBtn" class="icon-btn" title="Ganti Tema Dark/Light">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+                <button id="mobileKeypadToggleBtn" class="icon-btn hidden" title="Tampilkan Virtual Keypad">
+                    <i class="fa-solid fa-keyboard"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="app-container">
+
+        <!-- ==================== 1. START / SETUP SCREEN ==================== -->
+        <section id="setupScreen" class="screen active">
+            <div class="welcome-card">
+                <div class="welcome-header">
+                    <div class="hero-icon">
+                        <i class="fa-solid fa-chart-line-up"></i>
+                    </div>
+                    <h2>Simulasi Psikotes Kraepelin Realistis</h2>
+                    <p>Latih kecepatan, ketelitian, kestabilan, dan ketahanan kerja Anda untuk menghadapi ujian psikotes
+                        seleksi perusahaan & CPNS.</p>
+                </div>
+
+                <!-- Simulation Mode Selection -->
+                <div class="setup-section">
+                    <h3><i class="fa-solid fa-sliders"></i> Pilih Mode Tes</h3>
+                    <div class="mode-grid">
+                        <label class="mode-card active">
+                            <input type="radio" name="testMode" value="standard" checked>
+                            <div class="mode-content">
+                                <div class="mode-badge">Rekomendasi Ujian</div>
+                                <span class="mode-title">Mode Standar Perusahaan</span>
+                                <span class="mode-detail"><i class="fa-regular fa-clock"></i> 50 Lajur &bull; 15
+                                    dtk/lajur</span>
+                                <span class="mode-desc">Durasi total 12 menit 30 detik. Format standar tes seleksi kerja
+                                    asli.</span>
+                            </div>
+                        </label>
+                        <label class="mode-card">
+                            <input type="radio" name="testMode" value="medium">
+                            <div class="mode-content">
+                                <span class="mode-title">Mode Latihan Sedang</span>
+                                <span class="mode-detail"><i class="fa-regular fa-clock"></i> 20 Lajur &bull; 15
+                                    dtk/lajur</span>
+                                <span class="mode-desc">Durasi 5 menit. Cocok untuk sesi pemanasan dan evaluasi
+                                    cepat.</span>
+                            </div>
+                        </label>
+                        <label class="mode-card">
+                            <input type="radio" name="testMode" value="quick">
+                            <div class="mode-content">
+                                <span class="mode-title">Mode Quick Practice</span>
+                                <span class="mode-detail"><i class="fa-regular fa-clock"></i> 10 Lajur &bull; 15
+                                    dtk/lajur</span>
+                                <span class="mode-desc">Durasi 2 menit 30 detik. Latihan singkat respon jari &
+                                    konsentrasi.</span>
+                            </div>
+                        </label>
+                        <label class="mode-card">
+                            <input type="radio" name="testMode" value="custom">
+                            <div class="mode-content">
+                                <span class="mode-title">Mode Kustom</span>
+                                <span class="mode-detail"><i class="fa-solid fa-gear"></i> Sesuaikan Parameter</span>
+                                <span class="mode-desc">Atur jumlah lajur dan durasi waktu per lajur sesuai
+                                    keinginan.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Custom Options (Hidden by default) -->
+                <div id="customOptionsPanel" class="custom-panel hidden">
+                    <div class="custom-inputs">
+                        <div class="input-group">
+                            <label for="customColumns"><i class="fa-solid fa-table-columns"></i> Jumlah Lajur (1 -
+                                60):</label>
+                            <input type="number" id="customColumns" min="1" max="60" value="40">
+                        </div>
+                        <div class="input-group">
+                            <label for="customTimePerCol"><i class="fa-solid fa-stopwatch"></i> Detik Per Lajur (5 -
+                                30s):</label>
+                            <input type="number" id="customTimePerCol" min="5" max="30" value="15">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Guidance & Rules Box -->
+                <div class="guide-box">
+                    <h4><i class="fa-solid fa-lightbulb"></i> Cara Mengerjakan Tes Kraepelin:</h4>
+                    <ul class="guide-list">
+                        <li>
+                            <div class="guide-step">1</div>
+                            <div>Penjumlahan 2 angka berurutan secara <strong>vertikal dari bawah ke atas</strong>.
+                            </div>
+                        </li>
+                        <li>
+                            <div class="guide-step">2</div>
+                            <div>Isikan <strong>hanya angka SATUAN</strong> hasil penjumlahan. Contoh:
+                                <code>7 + 8 = 15</code> &rarr; Ketik <code>5</code>. <code>3 + 4 = 7</code> &rarr; Ketik
+                                <code>7</code>.
+                            </div>
+                        </li>
+                        <li>
+                            <div class="guide-step">3</div>
+                            <div>Setiap <strong>15 detik</strong> akan terdengar bunyi sinyal & Visual alert
+                                <strong>"PINDAH!"</strong> dan kursor otomatis bergeser ke kolom berikutnya.
+                            </div>
+                        </li>
+                        <li>
+                            <div class="guide-step">4</div>
+                            <div>Gunakan <strong>Numpad / Keyboard Angka (0-9)</strong>. Pada perangkat sentuh
+                                (smartphone/tablet), aktifkan Virtual Keypad.</div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Start Action Button -->
+                <div class="start-actions">
+                    <button id="startTestBtn" class="btn btn-primary btn-xl">
+                        <i class="fa-solid fa-play"></i> MULAI SIMULASI TES
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ==================== 2. ACTIVE TEST SCREEN ==================== -->
+        <section id="testScreen" class="screen">
+            <!-- Alert Banner for Column Switch -->
+            <div id="pindahBanner" class="pindah-banner hidden">
+                <i class="fa-solid fa-angles-right"></i> PINDAH LAJUR! <i class="fa-solid fa-angles-right"></i>
+            </div>
+
+            <!-- Control Floating Toolbar -->
+            <div class="test-top-bar">
+                <div class="test-status-info">
+                    <span id="currentColumnLabel">Lajur 1 dari 50</span>
+                    <span id="directionIndicator" class="direction-badge"><i class="fa-solid fa-arrow-up"></i> Bawah ke
+                        Atas</span>
+                </div>
+                <button id="abortTestBtn" class="btn btn-danger btn-sm">
+                    <i class="fa-solid fa-xmark"></i> Hentikan Tes
+                </button>
+            </div>
+
+            <!-- Kraepelin Matrix Board Workspace -->
+            <div class="matrix-wrapper" id="matrixWrapper">
+                <div class="matrix-scroll-container" id="matrixContainer">
+                    <!-- Columns will be injected dynamically by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Virtual Numpad for Mobile / Touch Devices -->
+            <div id="virtualKeypad" class="virtual-keypad">
+                <div class="keypad-grid">
+                    <button class="key-btn" data-key="7">7</button>
+                    <button class="key-btn" data-key="8">8</button>
+                    <button class="key-btn" data-key="9">9</button>
+                    <button class="key-btn" data-key="4">4</button>
+                    <button class="key-btn" data-key="5">5</button>
+                    <button class="key-btn" data-key="6">6</button>
+                    <button class="key-btn" data-key="1">1</button>
+                    <button class="key-btn" data-key="2">2</button>
+                    <button class="key-btn" data-key="3">3</button>
+                    <button class="key-btn key-zero" data-key="0">0</button>
+                    <button class="key-btn key-action" data-key="Backspace"><i
+                            class="fa-solid fa-delete-left"></i></button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ==================== 3. RESULTS & ANALYTICS DASHBOARD ==================== -->
+        <section id="resultScreen" class="screen">
+            <div class="result-dashboard">
+
+                <!-- Header Hero Result Card -->
+                <div class="result-hero-card">
+                    <div class="result-hero-main">
+                        <div class="performance-badge-container">
+                            <div id="resultGradeBadge" class="grade-badge grade-a">A</div>
+                            <div class="grade-info">
+                                <h2 id="resultGradeTitle">Performa Sangat Baik (Superior)</h2>
+                                <p id="resultGradeSub">Hasil simulasi tes Kraepelin Anda memenuhi standar kriteria
+                                    kelulusan psikotes seleksi perusahaan papan atas.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="result-quick-summary">
+                        <div class="quick-metric">
+                            <span class="qm-value text-accent" id="resAccuracySummary">0%</span>
+                            <span class="qm-label">Akurasi Jawaban</span>
+                        </div>
+                        <div class="divider-v"></div>
+                        <div class="quick-metric">
+                            <span class="qm-value" id="resAnsweredSummary">0</span>
+                            <span class="qm-label">Total Dijawab</span>
+                        </div>
+                        <div class="divider-v"></div>
+                        <div class="quick-metric">
+                            <span class="qm-value" id="resPaceSummary">0 /m</span>
+                            <span class="qm-label">Kecepatan Rata-rata</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 9 Detailed Key Metric Cards -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="mc-icon text-blue"><i class="fa-solid fa-list-ol"></i></div>
+                        <div class="mc-content">
+                            <span class="mc-title">Total Soal Dibuka</span>
+                            <span class="mc-number" id="metricTotalQuestions">0</span>
+                            <span class="mc-sub">Seluruh penjumlahan</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="mc-icon text-indigo"><i class="fa-solid fa-pen-to-square"></i></div>
+                        <div class="mc-content">
+                            <span class="mc-title">Soal Dijawab</span>
+                            <span class="mc-number" id="metricAnswered">0</span>
+                            <span class="mc-sub" id="metricAnsweredPercent">0% dari total</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="mc-icon text-amber"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                        <div class="mc-content">
+                            <span class="mc-title">Soal Tidak Dijawab</span>
+                            <span class="mc-number" id="metricUnanswered">0</span>
+                            <span class="mc-sub" id="metricUnansweredPercent">0% terlewati</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="mc-icon text-emerald"><i class="fa-solid fa-circle-check"></i></div>
+                        <div class="mc-content">
+                            <span class="mc-title">Jawaban Benar</span>
+                            <span class="mc-number text-emerald" id="metricCorrect">0</span>
+                            <span class="mc-sub">Angka satuan tepat</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="mc-icon text-rose"><i class="fa-solid fa-circle-xmark"></i></div>
+                        <div class="mc-content">
+                            <span class="mc-title">Jawaban Salah</span>
+                            <span class="mc-number text-rose" id="metricWrong">0</span>
+                            <span class="mc-sub">Kesalahan hitung</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="mc-icon text-cyan"><i class="fa-solid fa-bullseye"></i></div>
+                        <div class="mc-content">
+                            <span class="mc-title">Tingkat Akurasi</span>
+                            <span class="mc-number text-cyan" id="metricAccuracy">0%</span>
+                            <span class="mc-sub">Presisi pengerjaan</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="mc-icon text-purple"><i class="fa-solid fa-stopwatch"></i></div>
+                        <div class="mc-content">
+                            <span class="mc-title">Rata-Rata Waktu</span>
+                            <span class="mc-number" id="metricAvgTime">0.0s</span>
+                            <span class="mc-sub">Per item penjumlahan</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="mc-icon text-orange"><i class="fa-solid fa-bolt"></i></div>
+                        <div class="mc-content">
+                            <span class="mc-title">Kecepatan Menjawab</span>
+                            <span class="mc-number" id="metricSpeedPace">0</span>
+                            <span class="mc-sub">Jawaban per menit</span>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="mc-icon text-teal"><i class="fa-solid fa-hourglass-half"></i></div>
+                        <div class="mc-content">
+                            <span class="mc-title">Total Durasi Tes</span>
+                            <span class="mc-number" id="metricDuration">12:30</span>
+                            <span class="mc-sub">Waktu pengerjaan inti</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kraepelin Work Curve Graph (Kurva Kerja Kraepelin) -->
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <h3><i class="fa-solid fa-chart-area"></i> Grafik Kurva Kerja Kraepelin (Work Curve)</h3>
+                            <p>Visualisasi jumlah jawaban benar dan total jawaban pada setiap lajur (Lajur 1 s.d Lajur
+                                Akhir).</p>
+                        </div>
+                        <div class="chart-legend-custom">
+                            <span class="legend-item legend-total"><span class="dot"></span> Total Dijawab</span>
+                            <span class="legend-item legend-correct"><span class="dot"></span> Jawaban Benar</span>
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="kraepelinChart" height="280"></canvas>
+                    </div>
+                </div>
+
+                <!-- Psychological Interpretation & Analysis Section -->
+                <div class="psycho-analysis-card">
+                    <h3><i class="fa-solid fa-user-astronaut"></i> Analisis Psikogram & Sikap Kerja</h3>
+                    <div class="psycho-grid">
+                        <div class="psycho-aspect">
+                            <div class="aspect-header">
+                                <span class="aspect-icon"><i class="fa-solid fa-gauge-high"></i></span>
+                                <h4>1. Kecepatan Kerja (Pace)</h4>
+                            </div>
+                            <p id="analysisSpeed">Analisis tingkat kecepatan kerja Anda...</p>
+                        </div>
+                        <div class="psycho-aspect">
+                            <div class="aspect-header">
+                                <span class="aspect-icon"><i class="fa-solid fa-bullseye"></i></span>
+                                <h4>2. Ketelitian Kerja (Accuracy)</h4>
+                            </div>
+                            <p id="analysisAccuracy">Analisis ketelitian dan kontrol kesalahan...</p>
+                        </div>
+                        <div class="psycho-aspect">
+                            <div class="aspect-header">
+                                <span class="aspect-icon"><i class="fa-solid fa-wave-square"></i></span>
+                                <h4>3. Kestabilan Emosi & Kerja (Stability)</h4>
+                            </div>
+                            <p id="analysisStability">Analisis konsistensi ritme antar lajur...</p>
+                        </div>
+                        <div class="psycho-aspect">
+                            <div class="aspect-header">
+                                <span class="aspect-icon"><i class="fa-solid fa-battery-three-quarters"></i></span>
+                                <h4>4. Ketahanan Kerja & Daya Tahan (Endurance)</h4>
+                            </div>
+                            <p id="analysisEndurance">Analisis grafik ketahanan fisik & mental dari awal hingga akhir...
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="recommendation-box">
+                        <h4><i class="fa-solid fa-lightbulb text-amber"></i> Saran & Tips Evaluasi Psikotes:</h4>
+                        <p id="analysisTips">Tips untuk meningkatkan skor pada ujian psikotes berikutnya.</p>
+                    </div>
+                </div>
+
+                <!-- Column-by-Column Breakdown Table -->
+                <div class="breakdown-card">
+                    <div class="breakdown-header" id="toggleTableBtn">
+                        <h3><i class="fa-solid fa-table"></i> Rincian Performa per Lajur</h3>
+                        <button class="btn btn-outline btn-sm"><i class="fa-solid fa-chevron-down"></i> Tampilkan /
+                            Sembunyikan Detail</button>
+                    </div>
+                    <div id="tableContainer" class="breakdown-table-wrapper hidden">
+                        <table class="breakdown-table">
+                            <thead>
+                                <tr>
+                                    <th>Lajur #</th>
+                                    <th>Total Soal</th>
+                                    <th>Dijawab</th>
+                                    <th>Benar</th>
+                                    <th>Salah</th>
+                                    <th>Terlewati</th>
+                                    <th>Akurasi</th>
+                                    <th>Visual Bar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="breakdownTableBody">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="result-actions">
+                    <button id="restartTestBtn" class="btn btn-primary btn-lg">
+                        <i class="fa-solid fa-rotate-right"></i> Ulangi Tes Kraepelin
+                    </button>
+                    <button id="printReportBtn" class="btn btn-secondary btn-lg">
+                        <i class="fa-solid fa-print"></i> Cetak / Simpan Laporan PDF
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Countdown Modal Overlay -->
+    <div id="countdownModal" class="modal-overlay hidden">
+        <div class="countdown-content">
+            <div class="countdown-title">Bersenang-senanglah & Tetap Fokus!</div>
+            <div id="countdownNumber" class="countdown-number">3</div>
+            <div class="countdown-sub">Tes akan dimulai dalam hitungan mundur...</div>
+        </div>
+    </div>
+
+    <!-- Abort / Pause Test Confirmation Modal -->
+    <div id="abortModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-icon text-rose">
+                    <i class="fa-solid fa-circle-pause"></i>
+                </div>
+                <h3>Hentikan Tes Kraepelin?</h3>
+                <p>Pilih tindakan yang ingin Anda lakukan terhadap simulasi tes yang sedang berlangsung:</p>
+            </div>
+            <div class="modal-actions-vertical">
+                <button id="finishNowBtn" class="btn btn-primary btn-md">
+                    <i class="fa-solid fa-chart-pie"></i> Selesaikan & Lihat Hasil Sekarang
+                </button>
+                <button id="exitSetupBtn" class="btn btn-secondary btn-md">
+                    <i class="fa-solid fa-house"></i> Batalkan & Ke Menu Utama
+                </button>
+                <button id="resumeTestBtn" class="btn btn-outline btn-md">
+                    <i class="fa-solid fa-play"></i> Lanjutkan Tes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Result Scroll Guidance Popup Modal -->
+    <div id="resultNoticeModal" class="modal-overlay hidden">
+        <div class="result-notice-popup">
+            <div class="scroll-notice-banner-pill">
+                <i class="fa-solid fa-angles-down animated-bounce"></i> 
+                <span>Scroll ke bawah untuk melihat hasil, grafik kurva kerja &amp; analisis psikogram</span> 
+                <i class="fa-solid fa-angles-down animated-bounce"></i>
+            </div>
+            <button id="closeNoticeModalBtn" class="btn btn-primary btn-md">
+                <i class="fa-solid fa-check"></i> Mengerti &amp; Lihat Hasil
+            </button>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
+</body>
+
+</html>
