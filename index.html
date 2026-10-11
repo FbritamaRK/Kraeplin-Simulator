@@ -483,16 +483,25 @@
         </div>
     </div>
 
-    <!-- Result Scroll Guidance Popup Modal -->
-    <div id="resultNoticeModal" class="modal-overlay hidden">
-        <div class="result-notice-popup">
-            <div class="scroll-notice-banner-pill">
-                <i class="fa-solid fa-angles-down animated-bounce"></i> 
-                <span>Scroll ke bawah untuk melihat hasil, grafik kurva kerja &amp; analisis psikogram</span> 
-                <i class="fa-solid fa-angles-down animated-bounce"></i>
+    <!-- Result Scroll Guidance Toast Notification -->
+    <div id="resultNoticeModal" class="result-toast-notification hidden" role="alert" aria-live="polite">
+        <div class="result-toast-card" id="resultToastCard">
+            <div class="result-toast-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
             </div>
-            <button id="closeNoticeModalBtn" class="btn btn-primary btn-md">
-                <i class="fa-solid fa-check"></i> Mengerti &amp; Lihat Hasil
+            <div class="result-toast-content">
+                <h4 class="result-toast-title">Test Selesai</h4>
+                <p class="result-toast-desc">silahkan scroll kebawah untuk melihat hasilnya</p>
+            </div>
+            <button id="closeNoticeModalBtn" class="result-toast-close" type="button" aria-label="Tutup notifikasi">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
             </button>
         </div>
     </div>

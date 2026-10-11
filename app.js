@@ -78,8 +78,9 @@ document.addEventListener('DOMContentLoaded', () => {
         exitSetupBtn: document.getElementById('exitSetupBtn'),
         resumeTestBtn: document.getElementById('resumeTestBtn'),
         
-        // Result Notice Popup Modal
+        // Result Notice Toast Notification
         resultNoticeModal: document.getElementById('resultNoticeModal'),
+        resultToastCard: document.getElementById('resultToastCard'),
         closeNoticeModalBtn: document.getElementById('closeNoticeModalBtn'),
         
         // Result Screen Metrics
@@ -287,27 +288,76 @@ document.addEventListener('DOMContentLoaded', () => {
         state.isPaused = false;
     });
 
-    // Close Result Scroll Notice Modal & Trigger Smooth Scroll Animation
-    if (DOM.closeNoticeModalBtn) {
-        DOM.closeNoticeModalBtn.addEventListener('click', () => {
+    // Result Scroll Notice Toast Handling & Smooth Scroll
+    let resultToastTimer = null;
+
+    function hideResultToast() {
+        if (!DOM.resultNoticeModal || DOM.resultNoticeModal.classList.contains('hidden')) return;
+        DOM.resultNoticeModal.classList.add('toast-hiding');
+        setTimeout(() => {
             if (DOM.resultNoticeModal) {
                 DOM.resultNoticeModal.classList.add('hidden');
+                DOM.resultNoticeModal.classList.remove('toast-hiding');
             }
-            // Smooth scroll animation to metrics grid and Kraepelin Work Curve graph
+        }, 240);
+        if (resultToastTimer) {
+            clearTimeout(resultToastTimer);
+            resultToastTimer = null;
+        }
+    }
+
+    function showResultToast() {
+        if (!DOM.resultNoticeModal) return;
+        if (resultToastTimer) {
+            clearTimeout(resultToastTimer);
+            resultToastTimer = null;
+        }
+        DOM.resultNoticeModal.classList.remove('toast-hiding');
+        DOM.resultNoticeModal.classList.remove('hidden');
+
+        // Auto dismiss after 10 seconds
+        resultToastTimer = setTimeout(() => {
+            hideResultToast();
+        }, 10000);
+    }
+
+    if (DOM.closeNoticeModalBtn) {
+        DOM.closeNoticeModalBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            hideResultToast();
+        });
+    }
+
+    if (DOM.resultToastCard) {
+        DOM.resultToastCard.addEventListener('click', (e) => {
+            if (e.target.closest('#closeNoticeModalBtn')) return;
+            hideResultToast();
             setTimeout(() => {
                 const targetElement = document.querySelector('.metrics-grid') || document.querySelector('.chart-card');
                 if (targetElement) {
                     targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
-            }, 100);
+            }, 80);
         });
     }
+
+    // Auto dismiss toast when user scrolls down the results page
+    window.addEventListener('scroll', () => {
+        if (DOM.resultScreen && DOM.resultScreen.classList.contains('active')) {
+            if (window.scrollY > 150) {
+                hideResultToast();
+            }
+        }
+    }, { passive: true });
 
     // Helper: Switch Screens
     function switchScreen(targetScreen) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         targetScreen.classList.add('active');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (targetScreen !== DOM.resultScreen) {
+            hideResultToast();
+        }
     }
 
     // ==========================================
@@ -693,10 +743,8 @@ document.addEventListener('DOMContentLoaded', () => {
         calculateResultsAndAnalytics();
         switchScreen(DOM.resultScreen);
 
-        // Display result scroll guidance popup modal
-        if (DOM.resultNoticeModal) {
-            DOM.resultNoticeModal.classList.remove('hidden');
-        }
+        // Display result scroll guidance toast notification
+        showResultToast();
     }
 
     // ==========================================
