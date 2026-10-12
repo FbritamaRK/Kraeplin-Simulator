@@ -67,9 +67,6 @@
                 <button id="themeToggleBtn" class="icon-btn" title="Ganti Tema Dark/Light">
                     <i class="fa-solid fa-moon"></i>
                 </button>
-                <button id="mobileKeypadToggleBtn" class="icon-btn hidden" title="Tampilkan Virtual Keypad">
-                    <i class="fa-solid fa-keyboard"></i>
-                </button>
             </div>
         </div>
     </header>
@@ -207,8 +204,8 @@
                         </li>
                         <li>
                             <div class="guide-step">4</div>
-                            <div>Gunakan <strong>Numpad / Keyboard Angka (0-9)</strong>. Pada perangkat sentuh
-                                (smartphone/tablet), aktifkan Virtual Keypad.</div>
+                            <div>Gunakan <strong>Keyboard Angka / Numpad (0-9)</strong>. Pada smartphone/tablet,
+                                keyboard angka bawaan HP akan otomatis muncul untuk mengisi jawaban.</div>
                         </li>
                     </ul>
                 </div>
@@ -237,47 +234,15 @@
                     <span id="directionIndicator" class="direction-badge badge-kraepelin"><i
                             class="fa-solid fa-arrow-up"></i> Bawah ke Atas</span>
                 </div>
-                <div class="test-top-actions">
-                    <button id="toggleVirtualKeypadInTestBtn" class="btn btn-secondary btn-sm hidden" type="button" title="Buka / Tutup Virtual Keypad">
-                        <i class="fa-solid fa-keyboard"></i> <span class="hide-xs">Numpad</span>
-                    </button>
-                    <button id="abortTestBtn" class="btn btn-danger btn-sm">
-                        <i class="fa-solid fa-xmark"></i> Hentikan Tes
-                    </button>
-                </div>
+                <button id="abortTestBtn" class="btn btn-danger btn-sm">
+                    <i class="fa-solid fa-xmark"></i> Hentikan Tes
+                </button>
             </div>
 
             <!-- Kraepelin Matrix Board Workspace -->
             <div class="matrix-wrapper" id="matrixWrapper">
                 <div class="matrix-scroll-container" id="matrixContainer">
                     <!-- Columns will be injected dynamically by JavaScript -->
-                </div>
-            </div>
-
-            <!-- Virtual Numpad for Mobile / Touch Devices -->
-            <div id="virtualKeypad" class="virtual-keypad">
-                <div class="keypad-toolbar">
-                    <div class="keypad-title-group">
-                        <span class="keypad-badge"><i class="fa-solid fa-keyboard"></i> Numpad Sentuh</span>
-                        <span class="keypad-hint">Keyboard HP dinonaktifkan</span>
-                    </div>
-                    <button id="closeVirtualKeypadBtn" class="keypad-close-btn" type="button" aria-label="Sembunyikan Virtual Keypad" title="Sembunyikan Virtual Keypad">
-                        <i class="fa-solid fa-chevron-down"></i> Sembunyikan
-                    </button>
-                </div>
-                <div class="keypad-grid">
-                    <button class="key-btn" data-key="7" type="button">7</button>
-                    <button class="key-btn" data-key="8" type="button">8</button>
-                    <button class="key-btn" data-key="9" type="button">9</button>
-                    <button class="key-btn" data-key="4" type="button">4</button>
-                    <button class="key-btn" data-key="5" type="button">5</button>
-                    <button class="key-btn" data-key="6" type="button">6</button>
-                    <button class="key-btn" data-key="1" type="button">1</button>
-                    <button class="key-btn" data-key="2" type="button">2</button>
-                    <button class="key-btn" data-key="3" type="button">3</button>
-                    <button class="key-btn key-zero" data-key="0" type="button">0</button>
-                    <button class="key-btn key-action" data-key="Backspace" type="button" aria-label="Hapus"><i
-                            class="fa-solid fa-delete-left"></i></button>
                 </div>
             </div>
         </section>

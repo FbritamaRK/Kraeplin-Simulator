@@ -34,9 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Audio Context Synthesizer
         audioCtx: null,
         chartInstance: null,
-
-        // Virtual Keypad runtime state
-        virtualKeypadActive: false,
         currentFocusedPair: 0
     };
 
@@ -72,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Header Controls
         themeToggleBtn: document.getElementById('themeToggleBtn'),
         soundToggleBtn: document.getElementById('soundToggleBtn'),
-        mobileKeypadToggleBtn: document.getElementById('mobileKeypadToggleBtn'),
         testStatsHeader: document.getElementById('testStatsHeader'),
         headerColumnIndex: document.getElementById('headerColumnIndex'),
         headerColumnTimer: document.getElementById('headerColumnTimer'),
@@ -85,9 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
         pindahBanner: document.getElementById('pindahBanner'),
         currentColumnLabel: document.getElementById('currentColumnLabel'),
         abortTestBtn: document.getElementById('abortTestBtn'),
-        toggleVirtualKeypadInTestBtn: document.getElementById('toggleVirtualKeypadInTestBtn'),
-        virtualKeypad: document.getElementById('virtualKeypad'),
-        closeVirtualKeypadBtn: document.getElementById('closeVirtualKeypadBtn'),
         
         // Custom Abort Modal
         abortModal: document.getElementById('abortModal'),
@@ -136,61 +129,6 @@ document.addEventListener('DOMContentLoaded', () => {
         printReportBtn: document.getElementById('printReportBtn')
     };
 
-    // Detect Touch / Mobile Screen: Enable Virtual Keypad by default for touch/mobile devices
-    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.innerWidth <= 1024);
-    state.virtualKeypadActive = isTouchDevice;
-
-    // Ensure keypad and toggles are hidden on initial setup screen
-    DOM.virtualKeypad.classList.remove('visible');
-    DOM.mobileKeypadToggleBtn.classList.add('hidden');
-    if (DOM.toggleVirtualKeypadInTestBtn) {
-        DOM.toggleVirtualKeypadInTestBtn.classList.add('hidden');
-    }
-
-    // Helper: Manage Virtual Keypad Visibility & Native Keyboard Prevention
-    function setVirtualKeypadVisibility(visible, updatePreference = true) {
-        if (updatePreference) {
-            state.virtualKeypadActive = visible;
-        }
-
-        if (visible && DOM.testScreen && DOM.testScreen.classList.contains('active')) {
-            DOM.virtualKeypad.classList.add('visible');
-            DOM.testScreen.classList.add('has-virtual-keypad');
-            if (DOM.mobileKeypadToggleBtn) {
-                DOM.mobileKeypadToggleBtn.classList.add('active');
-                DOM.mobileKeypadToggleBtn.setAttribute('title', 'Sembunyikan Virtual Keypad');
-            }
-            if (DOM.toggleVirtualKeypadInTestBtn) {
-                DOM.toggleVirtualKeypadInTestBtn.classList.add('active');
-            }
-            // Prevent native mobile software keyboard from opening and conflicting
-            setInputModeOnMatrix('none');
-        } else {
-            DOM.virtualKeypad.classList.remove('visible');
-            if (DOM.testScreen) {
-                DOM.testScreen.classList.remove('has-virtual-keypad');
-            }
-            if (DOM.mobileKeypadToggleBtn) {
-                DOM.mobileKeypadToggleBtn.classList.remove('active');
-                DOM.mobileKeypadToggleBtn.setAttribute('title', 'Tampilkan Virtual Keypad');
-            }
-            if (DOM.toggleVirtualKeypadInTestBtn) {
-                DOM.toggleVirtualKeypadInTestBtn.classList.remove('active');
-            }
-            // If virtual keypad is closed during active test, allow native phone keyboard
-            if (DOM.testScreen && DOM.testScreen.classList.contains('active')) {
-                setInputModeOnMatrix('numeric');
-            }
-        }
-    }
-
-    function setInputModeOnMatrix(mode) {
-        if (!DOM.matrixContainer) return;
-        const inputs = DOM.matrixContainer.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.setAttribute('inputmode', mode);
-        });
-    }
 
     // ==========================================
     // 3. Audio Synthesizer (Web Audio API)
@@ -351,25 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Mobile Keypad Toggle Listeners
-    DOM.mobileKeypadToggleBtn.addEventListener('click', () => {
-        const isCurrentlyVisible = DOM.virtualKeypad.classList.contains('visible');
-        setVirtualKeypadVisibility(!isCurrentlyVisible, true);
-    });
-
-    if (DOM.toggleVirtualKeypadInTestBtn) {
-        DOM.toggleVirtualKeypadInTestBtn.addEventListener('click', () => {
-            const isCurrentlyVisible = DOM.virtualKeypad.classList.contains('visible');
-            setVirtualKeypadVisibility(!isCurrentlyVisible, true);
-        });
-    }
-
-    if (DOM.closeVirtualKeypadBtn) {
-        DOM.closeVirtualKeypadBtn.addEventListener('click', () => {
-            setVirtualKeypadVisibility(false, true);
-        });
-    }
-
     // Toggle Breakdown Table
     DOM.toggleTableBtn.addEventListener('click', () => {
         DOM.tableContainer.classList.toggle('hidden');
@@ -389,6 +308,10 @@ document.addEventListener('DOMContentLoaded', () => {
     DOM.abortTestBtn.addEventListener('click', () => {
         if (!state.isRunning) return;
         state.isPaused = true;
+        // Blur active input to dismiss phone keyboard when abort modal is open
+        if (document.activeElement && typeof document.activeElement.blur === 'function') {
+            document.activeElement.blur();
+        }
         DOM.abortModal.classList.remove('hidden');
     });
 
@@ -411,6 +334,15 @@ document.addEventListener('DOMContentLoaded', () => {
     DOM.resumeTestBtn.addEventListener('click', () => {
         DOM.abortModal.classList.add('hidden');
         state.isPaused = false;
+        // Refocus active input to bring native phone keyboard back
+        const targetPair = (state.currentFocusedPair !== undefined && state.currentFocusedPair !== null)
+            ? state.currentFocusedPair
+            : 0;
+        const curInput = DOM.matrixContainer.querySelector(`input[data-col="${state.currentColIndex}"][data-pair="${targetPair}"]`);
+        if (curInput) {
+            curInput.focus();
+            curInput.select();
+        }
     });
 
     // Result Scroll Notice Toast Handling & Smooth Scroll
@@ -477,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper: Switch Screens
     function switchScreen(targetScreen) {
-        // Blur active element to immediately close any mobile soft keyboard
+        // Blur active element to immediately close native mobile keyboard
         if (document.activeElement && typeof document.activeElement.blur === 'function') {
             document.activeElement.blur();
         }
@@ -485,25 +417,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         targetScreen.classList.add('active');
         window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        if (targetScreen === DOM.testScreen) {
-            // In test screen: show keypad toggles if on mobile / touch screen
-            if (isTouchDevice || window.innerWidth <= 1024) {
-                DOM.mobileKeypadToggleBtn.classList.remove('hidden');
-                if (DOM.toggleVirtualKeypadInTestBtn) {
-                    DOM.toggleVirtualKeypadInTestBtn.classList.remove('hidden');
-                }
-            }
-            setVirtualKeypadVisibility(state.virtualKeypadActive, false);
-        } else {
-            // When leaving test screen (e.g. setupScreen or resultScreen):
-            // Always hide virtual keypad and header toggle!
-            setVirtualKeypadVisibility(false, false);
-            DOM.mobileKeypadToggleBtn.classList.add('hidden');
-            if (DOM.toggleVirtualKeypadInTestBtn) {
-                DOM.toggleVirtualKeypadInTestBtn.classList.add('hidden');
-            }
-        }
 
         if (targetScreen !== DOM.resultScreen) {
             hideResultToast();
@@ -626,8 +539,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 inputSlot.className = 'input-slot';
                 
                 const input = document.createElement('input');
-                input.type = 'text';
-                input.inputMode = state.virtualKeypadActive ? 'none' : 'numeric';
+                input.type = 'tel';
+                input.inputMode = 'numeric';
+                input.pattern = '[0-9]*';
                 input.maxLength = 1;
                 input.dataset.col = colIdx;
                 input.dataset.pair = pairIndex;
@@ -649,6 +563,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             colEl.appendChild(stackEl);
+
+            // Clicking anywhere on active column focuses the current input to pop up mobile keyboard
+            colEl.addEventListener('click', (e) => {
+                if (colIdx !== state.currentColIndex || !state.isRunning || state.isPaused) return;
+                if (e.target.tagName !== 'INPUT') {
+                    const targetPair = (state.currentFocusedPair !== undefined && state.currentFocusedPair !== null)
+                        ? state.currentFocusedPair
+                        : 0;
+                    const targetInput = colEl.querySelector(`input[data-pair="${targetPair}"]`);
+                    if (targetInput) {
+                        targetInput.focus();
+                        targetInput.select();
+                    }
+                }
+            });
+
             DOM.matrixContainer.appendChild(colEl);
         });
 
@@ -744,56 +674,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             });
+
+            // Handle backspace when input is already empty on mobile keyboards
+            input.addEventListener('beforeinput', (e) => {
+                if (e.inputType === 'deleteContentBackward' && input.value === '') {
+                    const col = parseInt(input.dataset.col);
+                    const pair = parseInt(input.dataset.pair);
+                    if (col === state.currentColIndex) {
+                        moveFocus(col, pair - 1);
+                    }
+                }
+            });
         });
     }
-
-    // Unified Virtual Keypad Input Handler
-    function handleKeypadInput(key) {
-        if (!state.isRunning || state.isPaused) return;
-
-        let activeInput = document.activeElement;
-        if (!activeInput || activeInput.tagName !== 'INPUT' || parseInt(activeInput.dataset.col) !== state.currentColIndex) {
-            const pairToTarget = (state.currentFocusedPair !== undefined && state.currentFocusedPair !== null)
-                ? state.currentFocusedPair
-                : 0;
-            activeInput = DOM.matrixContainer.querySelector(`input[data-col="${state.currentColIndex}"][data-pair="${pairToTarget}"]`);
-        }
-
-        if (!activeInput) return;
-
-        const col = parseInt(activeInput.dataset.col);
-        const pair = parseInt(activeInput.dataset.pair);
-
-        if (key >= '0' && key <= '9') {
-            activeInput.value = key;
-            activeInput.classList.add('filled');
-            state.userAnswers[col][pair] = parseInt(key);
-            playSound('click');
-            moveFocus(col, pair + 1);
-        } else if (key === 'Backspace') {
-            if (activeInput.value !== '') {
-                activeInput.value = '';
-                activeInput.classList.remove('filled');
-                state.userAnswers[col][pair] = null;
-            } else {
-                moveFocus(col, pair - 1);
-            }
-        }
-    }
-
-    // Virtual Keypad Button Listeners
-    const virtualKeys = DOM.virtualKeypad.querySelectorAll('.key-btn');
-    virtualKeys.forEach(btn => {
-        // Prevent pointerdown from stealing input focus
-        btn.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-        });
-
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            handleKeypadInput(btn.dataset.key);
-        });
-    });
 
     function moveFocus(col, targetPair) {
         const totalPairs = state.digitsPerColumn - 1;

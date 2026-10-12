@@ -27,7 +27,7 @@ Kamu bisa memainkan simulasi ini pada kraeplinpaulisimulator.vercel.app
 ### 3. Otomatisasi Navigasi & Adaptive Auto-Scroll
 - **Auto-Scroll Awal Lajur**: Menyesuaikan otomatis dengan jenis tes yang dipilih (ke angka paling bawah untuk Kraepelin, atau angka paling atas untuk Pauli).
 - **Directional Focus Tracking**: Layar melakukan smooth auto-scroll mengikuti pergerakan kursor saat pengguna mengetik jawaban (naik untuk Kraepelin, turun untuk Pauli).
-- **Dukungan Keyboard & Touchscreen**: Kontrol keyboard numpad angka (0-9), tombol panah, backspace, serta **Virtual Keypad** bawaan untuk pengguna ponsel/tablet.
+- **Dukungan Keyboard PC & Mobile**: Kontrol keyboard numpad angka (0-9), tombol panah, backspace di PC, serta keyboard angka bawaan HP yang otomatis muncul di ponsel/tablet.
 
 ### 4. Pilihan Mode Durasi & Lajur
 - **Mode Standar Perusahaan**: 50 Lajur @ 15 detik (Total 12m 30s) – *Simulasi ujian asli*.
@@ -79,13 +79,13 @@ Kamu bisa memainkan simulasi ini pada kraeplinpaulisimulator.vercel.app
 ## 💡 Petunjuk Pengerjaan Tes
 
 ### A. Untuk Tes Kraepelin (Bawah ke Atas):
-1. Posisikan tangan rileks di atas **Numpad Keyboard (0-9)**. Pada smartphone/tablet, aktifkan **Virtual Keypad**.
+1. Posisikan tangan rileks di atas **Numpad Keyboard (0-9)** (pada smartphone/tablet, keyboard angka HP otomatis muncul).
 2. Fokus pada 2 angka paling bawah di kolom aktif. Hitung jumlahnya dan ketik **angka satuannya**.
 3. Begitu angka diketik, kursor otomatis berpindah ke pasangan angka di atasnya (**bergerak naik**).
 4. Ketika terdengar bunyi lonceng & peringatan **"PINDAH LAJUR!"**, alihkan fokus mata langsung ke angka paling bawah di kolom berikutnya tanpa memikirkan soal yang terlewati.
 
 ### B. Untuk Tes Pauli (Atas ke Bawah):
-1. Posisikan tangan rileks di atas **Numpad Keyboard (0-9)** atau gunakan **Virtual Keypad**.
+1. Posisikan tangan rileks di atas **Numpad Keyboard (0-9)** (pada smartphone/tablet, keyboard angka HP otomatis muncul).
 2. Fokus pada 2 angka paling atas di kolom aktif. Hitung jumlahnya dan ketik **angka satuannya**.
 3. Begitu angka diketik, kursor otomatis berpindah ke pasangan angka di bawahnya (**bergerak turun**).
 4. Ketika terdengar bunyi lonceng & peringatan **"PINDAH LAJUR!"**, alihkan fokus mata langsung ke angka paling atas di kolom berikutnya.
