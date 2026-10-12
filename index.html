@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kraepelin Test Simulator - Simulasi Psikotes Kerja Realistis</title>
+    <title>Kraepelin &amp; Pauli Simulator - Simulasi Psikotes Koran (Hitungan Cepat)</title>
     <meta name="description"
-        content="Simulasi Tes Kraepelin online gratis untuk persiapan psikotes kerja perusahaan. Fitur 50 lajur, timer otomatis 15 detik per kolom, kurva kerja psikogram, dan analisis akurasi komprehensif.">
+        content="Simulasi Tes Kraepelin dan Tes Pauli (Tes Koran) online gratis untuk persiapan psikotes kerja perusahaan dan CPNS. Fitur pengerjaan Kraepelin (bawah ke atas) &amp; Pauli (atas ke bawah), kurva kerja psikogram, dan analisis akurasi komprehensif.">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,8 +35,8 @@
                     <i class="fa-solid fa-brain"></i>
                 </div>
                 <div class="brand-text">
-                    <h1>Kraepelin<span>Sim</span></h1>
-                    <span class="badge">Psikotes Simulator</span>
+                    <h1>Kraepelin &amp; Pauli<span>Sim</span></h1>
+                    <span class="badge">Simulator Tes Koran Online</span>
                 </div>
             </div>
 
@@ -82,16 +82,44 @@
             <div class="welcome-card">
                 <div class="welcome-header">
                     <div class="hero-icon">
-                        <i class="fa-solid fa-chart-line-up"></i>
+                        <i class="fa-solid fa-brain"></i>
                     </div>
-                    <h2>Simulasi Psikotes Kraepelin Realistis</h2>
+                    <h2>Simulasi Psikotes Kraepelin &amp; Pauli (Tes Koran)</h2>
                     <p>Latih kecepatan, ketelitian, kestabilan, dan ketahanan kerja Anda untuk menghadapi ujian psikotes
-                        seleksi perusahaan & CPNS.</p>
+                        seleksi perusahaan &amp; CPNS dengan format realistis Tes Kraepelin (bawah ke atas) dan Tes
+                        Pauli (atas ke bawah).</p>
+                </div>
+
+                <!-- Test Type Selection (Kraepelin vs Pauli) -->
+                <div class="setup-section">
+                    <h3><i class="fa-solid fa-arrows-up-down"></i> Pilih Jenis Tes</h3>
+                    <div class="type-grid">
+                        <label class="type-card active" id="typeCardKraepelin">
+                            <input type="radio" name="testType" value="kraepelin" checked>
+                            <div class="type-content">
+                                <span class="type-title">Tes Kraepelin</span>
+                                <div class="type-badge badge-kraepelin"><i class="fa-solid fa-arrow-up"></i> Bawah ke
+                                    Atas</div>
+                                <p class="type-desc">Penjumlahan angka secara vertikal dari <strong>bawah ke
+                                        atas</strong>. Format psikotes asli Kraepelin.</p>
+                            </div>
+                        </label>
+                        <label class="type-card" id="typeCardPauli">
+                            <input type="radio" name="testType" value="pauli">
+                            <div class="type-content">
+                                <span class="type-title">Tes Pauli</span>
+                                <div class="type-badge badge-pauli"><i class="fa-solid fa-arrow-down"></i> Atas ke Bawah
+                                </div>
+                                <p class="type-desc">Penjumlahan angka secara vertikal dari <strong>atas ke
+                                        bawah</strong>. Format psikotes asli Pauli (Tes Koran).</p>
+                            </div>
+                        </label>
+                    </div>
                 </div>
 
                 <!-- Simulation Mode Selection -->
                 <div class="setup-section">
-                    <h3><i class="fa-solid fa-sliders"></i> Pilih Mode Tes</h3>
+                    <h3><i class="fa-solid fa-sliders"></i> Pilih Mode Durasi &amp; Lajur</h3>
                     <div class="mode-grid">
                         <label class="mode-card active">
                             <input type="radio" name="testMode" value="standard" checked>
@@ -154,11 +182,12 @@
 
                 <!-- Guidance & Rules Box -->
                 <div class="guide-box">
-                    <h4><i class="fa-solid fa-lightbulb"></i> Cara Mengerjakan Tes Kraepelin:</h4>
+                    <h4 id="guideTitle"><i class="fa-solid fa-lightbulb"></i> Cara Mengerjakan Tes Kraepelin:</h4>
                     <ul class="guide-list">
                         <li>
                             <div class="guide-step">1</div>
-                            <div>Penjumlahan 2 angka berurutan secara <strong>vertikal dari bawah ke atas</strong>.
+                            <div id="guideStep1">Penjumlahan 2 angka berurutan secara <strong>vertikal dari bawah ke
+                                    atas</strong>.
                             </div>
                         </li>
                         <li>
@@ -170,8 +199,10 @@
                         </li>
                         <li>
                             <div class="guide-step">3</div>
-                            <div>Setiap <strong>15 detik</strong> akan terdengar bunyi sinyal & Visual alert
-                                <strong>"PINDAH!"</strong> dan kursor otomatis bergeser ke kolom berikutnya.
+                            <div id="guideStep3">Kursor otomatis bergerak <strong>naik</strong> setelah menjawab. Setiap
+                                <strong>15 detik</strong> akan terdengar bunyi sinyal &amp; visual alert
+                                <strong>"PINDAH!"</strong> dan kursor otomatis bergeser ke kolom berikutnya pada angka
+                                paling bawah.
                             </div>
                         </li>
                         <li>
@@ -185,7 +216,7 @@
                 <!-- Start Action Button -->
                 <div class="start-actions">
                     <button id="startTestBtn" class="btn btn-primary btn-xl">
-                        <i class="fa-solid fa-play"></i> MULAI SIMULASI TES
+                        <i class="fa-solid fa-play"></i> <span id="startBtnLabel">MULAI SIMULASI TES KRAEPELIN</span>
                     </button>
                 </div>
             </div>
@@ -203,12 +234,17 @@
             <div class="test-top-bar">
                 <div class="test-status-info">
                     <span id="currentColumnLabel">Lajur 1 dari 50</span>
-                    <span id="directionIndicator" class="direction-badge"><i class="fa-solid fa-arrow-up"></i> Bawah ke
-                        Atas</span>
+                    <span id="directionIndicator" class="direction-badge badge-kraepelin"><i
+                            class="fa-solid fa-arrow-up"></i> Bawah ke Atas</span>
                 </div>
-                <button id="abortTestBtn" class="btn btn-danger btn-sm">
-                    <i class="fa-solid fa-xmark"></i> Hentikan Tes
-                </button>
+                <div class="test-top-actions">
+                    <button id="toggleVirtualKeypadInTestBtn" class="btn btn-secondary btn-sm hidden" type="button" title="Buka / Tutup Virtual Keypad">
+                        <i class="fa-solid fa-keyboard"></i> <span class="hide-xs">Numpad</span>
+                    </button>
+                    <button id="abortTestBtn" class="btn btn-danger btn-sm">
+                        <i class="fa-solid fa-xmark"></i> Hentikan Tes
+                    </button>
+                </div>
             </div>
 
             <!-- Kraepelin Matrix Board Workspace -->
@@ -220,18 +256,27 @@
 
             <!-- Virtual Numpad for Mobile / Touch Devices -->
             <div id="virtualKeypad" class="virtual-keypad">
+                <div class="keypad-toolbar">
+                    <div class="keypad-title-group">
+                        <span class="keypad-badge"><i class="fa-solid fa-keyboard"></i> Numpad Sentuh</span>
+                        <span class="keypad-hint">Keyboard HP dinonaktifkan</span>
+                    </div>
+                    <button id="closeVirtualKeypadBtn" class="keypad-close-btn" type="button" aria-label="Sembunyikan Virtual Keypad" title="Sembunyikan Virtual Keypad">
+                        <i class="fa-solid fa-chevron-down"></i> Sembunyikan
+                    </button>
+                </div>
                 <div class="keypad-grid">
-                    <button class="key-btn" data-key="7">7</button>
-                    <button class="key-btn" data-key="8">8</button>
-                    <button class="key-btn" data-key="9">9</button>
-                    <button class="key-btn" data-key="4">4</button>
-                    <button class="key-btn" data-key="5">5</button>
-                    <button class="key-btn" data-key="6">6</button>
-                    <button class="key-btn" data-key="1">1</button>
-                    <button class="key-btn" data-key="2">2</button>
-                    <button class="key-btn" data-key="3">3</button>
-                    <button class="key-btn key-zero" data-key="0">0</button>
-                    <button class="key-btn key-action" data-key="Backspace"><i
+                    <button class="key-btn" data-key="7" type="button">7</button>
+                    <button class="key-btn" data-key="8" type="button">8</button>
+                    <button class="key-btn" data-key="9" type="button">9</button>
+                    <button class="key-btn" data-key="4" type="button">4</button>
+                    <button class="key-btn" data-key="5" type="button">5</button>
+                    <button class="key-btn" data-key="6" type="button">6</button>
+                    <button class="key-btn" data-key="1" type="button">1</button>
+                    <button class="key-btn" data-key="2" type="button">2</button>
+                    <button class="key-btn" data-key="3" type="button">3</button>
+                    <button class="key-btn key-zero" data-key="0" type="button">0</button>
+                    <button class="key-btn key-action" data-key="Backspace" type="button" aria-label="Hapus"><i
                             class="fa-solid fa-delete-left"></i></button>
                 </div>
             </div>
@@ -438,7 +483,7 @@
                 <!-- Action Buttons -->
                 <div class="result-actions">
                     <button id="restartTestBtn" class="btn btn-primary btn-lg">
-                        <i class="fa-solid fa-rotate-right"></i> Ulangi Tes Kraepelin
+                        <i class="fa-solid fa-rotate-right"></i> <span id="restartBtnLabel">Ulangi Tes</span>
                     </button>
                     <button id="printReportBtn" class="btn btn-secondary btn-lg">
                         <i class="fa-solid fa-print"></i> Cetak / Simpan Laporan PDF
@@ -455,7 +500,7 @@
         <div class="countdown-content">
             <div class="countdown-title">Bersenang-senanglah & Tetap Fokus!</div>
             <div id="countdownNumber" class="countdown-number">3</div>
-            <div class="countdown-sub">Tes akan dimulai dalam hitungan mundur...</div>
+            <div class="countdown-sub" id="countdownSub">Tes akan dimulai dalam hitungan mundur...</div>
         </div>
     </div>
 
@@ -466,7 +511,7 @@
                 <div class="modal-icon text-rose">
                     <i class="fa-solid fa-circle-pause"></i>
                 </div>
-                <h3>Hentikan Tes Kraepelin?</h3>
+                <h3 id="abortModalTitle">Hentikan Simulasi Tes?</h3>
                 <p>Pilih tindakan yang ingin Anda lakukan terhadap simulasi tes yang sedang berlangsung:</p>
             </div>
             <div class="modal-actions-vertical">
@@ -487,7 +532,8 @@
     <div id="resultNoticeModal" class="result-toast-notification hidden" role="alert" aria-live="polite">
         <div class="result-toast-card" id="resultToastCard">
             <div class="result-toast-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>
                     <line x1="12" y1="16" x2="12" y2="12"></line>
                     <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -498,7 +544,8 @@
                 <p class="result-toast-desc">silahkan scroll kebawah untuk melihat hasilnya</p>
             </div>
             <button id="closeNoticeModalBtn" class="result-toast-close" type="button" aria-label="Tutup notifikasi">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"
+                    stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>

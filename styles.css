@@ -243,6 +243,13 @@ body {
     color: var(--accent-indigo);
 }
 
+.icon-btn.active {
+    background-color: var(--accent-indigo);
+    border-color: var(--accent-indigo);
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+}
+
 /* ==========================================================================
    App Container & Screens
    ========================================================================== */
@@ -257,12 +264,12 @@ body {
 }
 
 .screen {
-    display: none;
+    display: none !important;
     animation: fadeIn 0.3s ease;
 }
 
 .screen.active {
-    display: block;
+    display: block !important;
 }
 
 @keyframes fadeIn {
@@ -332,6 +339,106 @@ body {
     align-items: center;
     gap: 8px;
     color: var(--text-primary);
+}
+
+/* Test Type Selection (Kraepelin vs Pauli) */
+.type-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+    .type-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.type-card {
+    position: relative;
+    border: 2px solid var(--border-color);
+    background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+    border-radius: var(--radius-md);
+    padding: 20px 22px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+}
+
+.type-card:hover {
+    border-color: rgba(99, 102, 241, 0.5);
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+}
+
+.type-card.active {
+    border-color: var(--accent-indigo);
+    background: var(--active-col-bg);
+    box-shadow: var(--glow-indigo);
+}
+
+.type-card input[type="radio"] {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    accent-color: var(--accent-indigo);
+    width: 18px;
+    height: 18px;
+}
+
+.type-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+    padding-right: 28px;
+}
+
+.type-title {
+    font-size: 1.22rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.25;
+    display: block;
+}
+
+.type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    width: fit-content;
+}
+
+.badge-kraepelin {
+    background: rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    color: var(--accent-indigo);
+}
+
+.badge-pauli {
+    background: rgba(6, 182, 212, 0.2);
+    border: 1px solid rgba(6, 182, 212, 0.4);
+    color: var(--accent-cyan);
+}
+
+.type-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+    margin: 0;
+    display: block;
+}
+
+.type-desc strong {
+    color: var(--accent-cyan);
 }
 
 .mode-grid {
@@ -603,8 +710,15 @@ body {
 #testScreen {
     position: relative;
     height: calc(100vh - 120px);
-    display: flex;
     flex-direction: column;
+}
+
+#testScreen.active {
+    display: flex !important;
+}
+
+#testScreen:not(.active) {
+    display: none !important;
 }
 
 .pindah-banner {
@@ -645,6 +759,28 @@ body {
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
+    gap: 12px;
+}
+
+.test-top-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#toggleVirtualKeypadInTestBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 0.84rem;
+    transition: var(--transition-fast);
+}
+
+#toggleVirtualKeypadInTestBtn.active {
+    background-color: rgba(99, 102, 241, 0.2);
+    border-color: var(--accent-indigo);
+    color: var(--accent-indigo);
 }
 
 .test-status-info {
@@ -656,12 +792,22 @@ body {
 }
 
 .direction-badge {
-    background-color: rgba(6, 182, 212, 0.15);
-    border: 1px solid rgba(6, 182, 212, 0.3);
-    color: var(--accent-cyan);
+    background-color: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    color: var(--accent-indigo);
     font-size: 0.78rem;
     padding: 4px 10px;
     border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+}
+
+.direction-badge.badge-pauli {
+    background-color: rgba(6, 182, 212, 0.15);
+    border-color: rgba(6, 182, 212, 0.35);
+    color: var(--accent-cyan);
 }
 
 .test-guide-notice {
@@ -828,14 +974,96 @@ body {
     width: 100%;
     background-color: var(--bg-secondary);
     border-top: 1px solid var(--border-color);
-    padding: 12px;
-    z-index: 90;
-    box-shadow: var(--shadow-lg);
+    padding: 10px 16px max(14px, env(safe-area-inset-bottom));
+    z-index: 95;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.45);
     display: none;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
 }
 
 .virtual-keypad.visible {
     display: block;
+    animation: keypadSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Strictly ensure virtual keypad never shows when test is not active */
+#testScreen:not(.active) .virtual-keypad,
+.screen:not(#testScreen) .virtual-keypad {
+    display: none !important;
+}
+
+#testScreen.has-virtual-keypad .matrix-wrapper {
+    padding-bottom: 270px;
+}
+
+@keyframes keypadSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.keypad-toolbar {
+    max-width: 400px;
+    margin: 0 auto 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px;
+}
+
+.keypad-title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.keypad-badge {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--accent-indigo);
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.keypad-hint {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.keypad-close-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: var(--transition-fast);
+}
+
+.keypad-close-btn:hover,
+.keypad-close-btn:active {
+    background: rgba(244, 63, 94, 0.15);
+    border-color: rgba(244, 63, 94, 0.3);
+    color: var(--accent-rose);
 }
 
 .keypad-grid {
@@ -852,14 +1080,17 @@ body {
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-family: 'JetBrains Mono', monospace;
-    font-size: 1.4rem;
+    font-size: 1.45rem;
     font-weight: 700;
-    padding: 14px 0;
+    padding: 13px 0;
     cursor: pointer;
     transition: var(--transition-fast);
     display: flex;
     align-items: center;
     justify-content: center;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
 }
 
 .key-btn:active {

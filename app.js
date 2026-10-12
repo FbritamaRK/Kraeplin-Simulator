@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. State Management & Variables
     // ==========================================
     const state = {
+        testType: 'kraepelin',      // 'kraepelin' (bawah ke atas) or 'pauli' (atas ke bawah)
         mode: 'standard',           // 'standard', 'medium', 'quick', 'custom'
         totalColumns: 50,           // Default 50 columns for standard
         timePerColumn: 15,          // 15 seconds per column
@@ -32,7 +33,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Audio Context Synthesizer
         audioCtx: null,
-        chartInstance: null
+        chartInstance: null,
+
+        // Virtual Keypad runtime state
+        virtualKeypadActive: false,
+        currentFocusedPair: 0
     };
 
     // ==========================================
@@ -45,6 +50,15 @@ document.addEventListener('DOMContentLoaded', () => {
         resultScreen: document.getElementById('resultScreen'),
         countdownModal: document.getElementById('countdownModal'),
         countdownNumber: document.getElementById('countdownNumber'),
+        countdownSub: document.getElementById('countdownSub'),
+        
+        // Test Type Selection (Kraepelin vs Pauli)
+        typeCards: document.querySelectorAll('.type-card'),
+        testTypeRadios: document.getElementsByName('testType'),
+        guideTitle: document.getElementById('guideTitle'),
+        guideStep1: document.getElementById('guideStep1'),
+        guideStep3: document.getElementById('guideStep3'),
+        startBtnLabel: document.getElementById('startBtnLabel'),
         
         // Mode Selection
         modeCards: document.querySelectorAll('.mode-card'),
@@ -53,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
         customColumnsInput: document.getElementById('customColumns'),
         customTimePerColInput: document.getElementById('customTimePerCol'),
         startTestBtn: document.getElementById('startTestBtn'),
+        directionIndicator: document.getElementById('directionIndicator'),
         
         // Header Controls
         themeToggleBtn: document.getElementById('themeToggleBtn'),
@@ -70,10 +85,13 @@ document.addEventListener('DOMContentLoaded', () => {
         pindahBanner: document.getElementById('pindahBanner'),
         currentColumnLabel: document.getElementById('currentColumnLabel'),
         abortTestBtn: document.getElementById('abortTestBtn'),
+        toggleVirtualKeypadInTestBtn: document.getElementById('toggleVirtualKeypadInTestBtn'),
         virtualKeypad: document.getElementById('virtualKeypad'),
+        closeVirtualKeypadBtn: document.getElementById('closeVirtualKeypadBtn'),
         
         // Custom Abort Modal
         abortModal: document.getElementById('abortModal'),
+        abortModalTitle: document.getElementById('abortModalTitle'),
         finishNowBtn: document.getElementById('finishNowBtn'),
         exitSetupBtn: document.getElementById('exitSetupBtn'),
         resumeTestBtn: document.getElementById('resumeTestBtn'),
@@ -114,14 +132,64 @@ document.addEventListener('DOMContentLoaded', () => {
         tableContainer: document.getElementById('tableContainer'),
         breakdownTableBody: document.getElementById('breakdownTableBody'),
         restartTestBtn: document.getElementById('restartTestBtn'),
+        restartBtnLabel: document.getElementById('restartBtnLabel'),
         printReportBtn: document.getElementById('printReportBtn')
     };
 
-    // Detect Touch / Mobile Screen to show Virtual Keypad toggle
-    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    if (isTouchDevice) {
-        DOM.mobileKeypadToggleBtn.classList.remove('hidden');
-        DOM.virtualKeypad.classList.add('visible');
+    // Detect Touch / Mobile Screen: Enable Virtual Keypad by default for touch/mobile devices
+    const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.innerWidth <= 1024);
+    state.virtualKeypadActive = isTouchDevice;
+
+    // Ensure keypad and toggles are hidden on initial setup screen
+    DOM.virtualKeypad.classList.remove('visible');
+    DOM.mobileKeypadToggleBtn.classList.add('hidden');
+    if (DOM.toggleVirtualKeypadInTestBtn) {
+        DOM.toggleVirtualKeypadInTestBtn.classList.add('hidden');
+    }
+
+    // Helper: Manage Virtual Keypad Visibility & Native Keyboard Prevention
+    function setVirtualKeypadVisibility(visible, updatePreference = true) {
+        if (updatePreference) {
+            state.virtualKeypadActive = visible;
+        }
+
+        if (visible && DOM.testScreen && DOM.testScreen.classList.contains('active')) {
+            DOM.virtualKeypad.classList.add('visible');
+            DOM.testScreen.classList.add('has-virtual-keypad');
+            if (DOM.mobileKeypadToggleBtn) {
+                DOM.mobileKeypadToggleBtn.classList.add('active');
+                DOM.mobileKeypadToggleBtn.setAttribute('title', 'Sembunyikan Virtual Keypad');
+            }
+            if (DOM.toggleVirtualKeypadInTestBtn) {
+                DOM.toggleVirtualKeypadInTestBtn.classList.add('active');
+            }
+            // Prevent native mobile software keyboard from opening and conflicting
+            setInputModeOnMatrix('none');
+        } else {
+            DOM.virtualKeypad.classList.remove('visible');
+            if (DOM.testScreen) {
+                DOM.testScreen.classList.remove('has-virtual-keypad');
+            }
+            if (DOM.mobileKeypadToggleBtn) {
+                DOM.mobileKeypadToggleBtn.classList.remove('active');
+                DOM.mobileKeypadToggleBtn.setAttribute('title', 'Tampilkan Virtual Keypad');
+            }
+            if (DOM.toggleVirtualKeypadInTestBtn) {
+                DOM.toggleVirtualKeypadInTestBtn.classList.remove('active');
+            }
+            // If virtual keypad is closed during active test, allow native phone keyboard
+            if (DOM.testScreen && DOM.testScreen.classList.contains('active')) {
+                setInputModeOnMatrix('numeric');
+            }
+        }
+    }
+
+    function setInputModeOnMatrix(mode) {
+        if (!DOM.matrixContainer) return;
+        const inputs = DOM.matrixContainer.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.setAttribute('inputmode', mode);
+        });
     }
 
     // ==========================================
@@ -191,8 +259,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // 4. Mode Selection & UI Listeners
+    // 4. Test Type & Mode Selection Listeners
     // ==========================================
+    function updateGuideAndUIForTestType() {
+        if (state.testType === 'pauli') {
+            if (DOM.guideTitle) DOM.guideTitle.innerHTML = '<i class="fa-solid fa-lightbulb"></i> Cara Mengerjakan Tes Pauli:';
+            if (DOM.guideStep1) DOM.guideStep1.innerHTML = 'Penjumlahan 2 angka berurutan secara <strong>vertikal dari atas ke bawah</strong>.';
+            if (DOM.guideStep3) DOM.guideStep3.innerHTML = 'Kursor otomatis bergerak <strong>turun</strong> setelah menjawab. Setiap <strong>15 detik</strong> akan terdengar bunyi sinyal &amp; visual alert <strong>"PINDAH!"</strong> dan kursor otomatis bergeser ke kolom berikutnya pada angka paling atas.';
+            if (DOM.startBtnLabel) DOM.startBtnLabel.innerText = 'MULAI SIMULASI TES PAULI';
+            if (DOM.directionIndicator) {
+                DOM.directionIndicator.className = 'direction-badge badge-pauli';
+                DOM.directionIndicator.innerHTML = '<i class="fa-solid fa-arrow-down"></i> Atas ke Bawah';
+            }
+            if (DOM.restartBtnLabel) DOM.restartBtnLabel.innerText = 'Ulangi Tes Pauli';
+        } else {
+            if (DOM.guideTitle) DOM.guideTitle.innerHTML = '<i class="fa-solid fa-lightbulb"></i> Cara Mengerjakan Tes Kraepelin:';
+            if (DOM.guideStep1) DOM.guideStep1.innerHTML = 'Penjumlahan 2 angka berurutan secara <strong>vertikal dari bawah ke atas</strong>.';
+            if (DOM.guideStep3) DOM.guideStep3.innerHTML = 'Kursor otomatis bergerak <strong>naik</strong> setelah menjawab. Setiap <strong>15 detik</strong> akan terdengar bunyi sinyal &amp; visual alert <strong>"PINDAH!"</strong> dan kursor otomatis bergeser ke kolom berikutnya pada angka paling bawah.';
+            if (DOM.startBtnLabel) DOM.startBtnLabel.innerText = 'MULAI SIMULASI TES KRAEPELIN';
+            if (DOM.directionIndicator) {
+                DOM.directionIndicator.className = 'direction-badge badge-kraepelin';
+                DOM.directionIndicator.innerHTML = '<i class="fa-solid fa-arrow-up"></i> Bawah ke Atas';
+            }
+            if (DOM.restartBtnLabel) DOM.restartBtnLabel.innerText = 'Ulangi Tes Kraepelin';
+        }
+    }
+
+    // Test Type Cards (Kraepelin vs Pauli)
+    DOM.typeCards.forEach(card => {
+        card.addEventListener('click', () => {
+            DOM.typeCards.forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            const radio = card.querySelector('input[type="radio"]');
+            if (radio) {
+                radio.checked = true;
+                state.testType = radio.value;
+                updateGuideAndUIForTestType();
+                playSound('click');
+            }
+        });
+    });
+
+    // Mode Cards (Duration & Preset)
     DOM.modeCards.forEach(card => {
         card.addEventListener('click', () => {
             DOM.modeCards.forEach(c => c.classList.remove('active'));
@@ -210,6 +318,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // Initialize UI for default test type
+    updateGuideAndUIForTestType();
 
     // Theme Toggle
     DOM.themeToggleBtn.addEventListener('click', () => {
@@ -240,10 +351,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Mobile Keypad Toggle
+    // Mobile Keypad Toggle Listeners
     DOM.mobileKeypadToggleBtn.addEventListener('click', () => {
-        DOM.virtualKeypad.classList.toggle('visible');
+        const isCurrentlyVisible = DOM.virtualKeypad.classList.contains('visible');
+        setVirtualKeypadVisibility(!isCurrentlyVisible, true);
     });
+
+    if (DOM.toggleVirtualKeypadInTestBtn) {
+        DOM.toggleVirtualKeypadInTestBtn.addEventListener('click', () => {
+            const isCurrentlyVisible = DOM.virtualKeypad.classList.contains('visible');
+            setVirtualKeypadVisibility(!isCurrentlyVisible, true);
+        });
+    }
+
+    if (DOM.closeVirtualKeypadBtn) {
+        DOM.closeVirtualKeypadBtn.addEventListener('click', () => {
+            setVirtualKeypadVisibility(false, true);
+        });
+    }
 
     // Toggle Breakdown Table
     DOM.toggleTableBtn.addEventListener('click', () => {
@@ -352,9 +477,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper: Switch Screens
     function switchScreen(targetScreen) {
+        // Blur active element to immediately close any mobile soft keyboard
+        if (document.activeElement && typeof document.activeElement.blur === 'function') {
+            document.activeElement.blur();
+        }
+
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         targetScreen.classList.add('active');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        if (targetScreen === DOM.testScreen) {
+            // In test screen: show keypad toggles if on mobile / touch screen
+            if (isTouchDevice || window.innerWidth <= 1024) {
+                DOM.mobileKeypadToggleBtn.classList.remove('hidden');
+                if (DOM.toggleVirtualKeypadInTestBtn) {
+                    DOM.toggleVirtualKeypadInTestBtn.classList.remove('hidden');
+                }
+            }
+            setVirtualKeypadVisibility(state.virtualKeypadActive, false);
+        } else {
+            // When leaving test screen (e.g. setupScreen or resultScreen):
+            // Always hide virtual keypad and header toggle!
+            setVirtualKeypadVisibility(false, false);
+            DOM.mobileKeypadToggleBtn.classList.add('hidden');
+            if (DOM.toggleVirtualKeypadInTestBtn) {
+                DOM.toggleVirtualKeypadInTestBtn.classList.add('hidden');
+            }
+        }
+
         if (targetScreen !== DOM.resultScreen) {
             hideResultToast();
         }
@@ -393,20 +543,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 digits.push(Math.floor(Math.random() * 9) + 1);
             }
             
-            // Calculate correct unit digit answers for adjacent vertical pairs (Bottom to Top)
-            // Example: Index 25 is bottom digit, Index 24 is one above bottom digit
             const expectedAnswers = [];
-            for (let p = state.digitsPerColumn - 1; p >= 1; p--) {
-                const bottomVal = digits[p];
-                const topVal = digits[p - 1];
-                const sum = bottomVal + topVal;
-                const unitDigit = sum % 10;
-                expectedAnswers.push({
-                    pairIndex: (state.digitsPerColumn - 1) - p, // 0 is bottom-most pair
-                    bottomDigit: bottomVal,
-                    topDigit: topVal,
-                    correctDigit: unitDigit
-                });
+            if (state.testType === 'pauli') {
+                // PAULI: Top to Bottom order
+                // Pair 0 is top pair: between index 0 and index 1
+                for (let p = 0; p < state.digitsPerColumn - 1; p++) {
+                    const topVal = digits[p];
+                    const bottomVal = digits[p + 1];
+                    const sum = topVal + bottomVal;
+                    const unitDigit = sum % 10;
+                    expectedAnswers.push({
+                        pairIndex: p, // 0 is top-most pair
+                        topDigit: topVal,
+                        bottomDigit: bottomVal,
+                        correctDigit: unitDigit
+                    });
+                }
+            } else {
+                // KRAEPELIN: Bottom to Top order
+                // Pair 0 is bottom-most pair: between index (N-1) and index (N-2)
+                for (let p = state.digitsPerColumn - 1; p >= 1; p--) {
+                    const bottomVal = digits[p];
+                    const topVal = digits[p - 1];
+                    const sum = bottomVal + topVal;
+                    const unitDigit = sum % 10;
+                    expectedAnswers.push({
+                        pairIndex: (state.digitsPerColumn - 1) - p, // 0 is bottom-most pair
+                        bottomDigit: bottomVal,
+                        topDigit: topVal,
+                        correctDigit: unitDigit
+                    });
+                }
             }
 
             state.matrixData.push({
@@ -421,7 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // 6. Build Kraepelin DOM Elements
+    // 6. Build Matrix DOM Elements (Kraepelin & Pauli)
     // ==========================================
     function renderKraepelinMatrix() {
         DOM.matrixContainer.innerHTML = '';
@@ -437,7 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
             headerBadge.innerText = `#${colIdx + 1}`;
             colEl.appendChild(headerBadge);
 
-            // Stack Container (Bottom to Top order)
+            // Stack Container
             const stackEl = document.createElement('div');
             stackEl.className = 'column-digits-stack';
 
@@ -447,22 +614,26 @@ document.addEventListener('DOMContentLoaded', () => {
             topDigitBox.innerText = colData.digits[0];
             stackEl.appendChild(topDigitBox);
 
-            // For each pair from top to bottom (so that visual renders top digit, input, bottom digit)
+            // For each pair from top to bottom
             for (let i = 0; i < colData.digits.length - 1; i++) {
-                // Input field between digit i and digit i+1
-                // Pair index from bottom: (colData.digits.length - 2) - i
-                const pairIndexFromBottom = (colData.digits.length - 2) - i;
+                // In Pauli: pair 0 is top-most (i)
+                // In Kraepelin: pair 0 is bottom-most ((length - 2) - i)
+                const pairIndex = (state.testType === 'pauli')
+                    ? i
+                    : (colData.digits.length - 2) - i;
                 
                 const inputSlot = document.createElement('div');
                 inputSlot.className = 'input-slot';
                 
                 const input = document.createElement('input');
                 input.type = 'text';
-                input.inputMode = 'numeric';
+                input.inputMode = state.virtualKeypadActive ? 'none' : 'numeric';
                 input.maxLength = 1;
                 input.dataset.col = colIdx;
-                input.dataset.pair = pairIndexFromBottom;
+                input.dataset.pair = pairIndex;
                 input.autocomplete = 'off';
+                input.autocapitalize = 'off';
+                input.spellcheck = false;
                 
                 // Disable inputs for inactive columns initially
                 if (colIdx !== 0) input.disabled = true;
@@ -491,6 +662,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const inputs = DOM.matrixContainer.querySelectorAll('input');
 
         inputs.forEach(input => {
+            // Keep track of focused pair
+            input.addEventListener('focus', () => {
+                state.currentFocusedPair = parseInt(input.dataset.pair);
+            });
+
             input.addEventListener('keydown', (e) => {
                 const col = parseInt(input.dataset.col);
                 const pair = parseInt(input.dataset.pair);
@@ -504,7 +680,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     state.userAnswers[col][pair] = parseInt(e.key);
                     playSound('click');
 
-                    // Move focus to next input ABOVE (pair + 1)
+                    // In both Kraepelin and Pauli, next question is pair + 1!
                     moveFocus(col, pair + 1);
                 } else if (e.key === 'Backspace') {
                     e.preventDefault();
@@ -513,53 +689,116 @@ document.addEventListener('DOMContentLoaded', () => {
                         input.classList.remove('filled');
                         state.userAnswers[col][pair] = null;
                     } else {
-                        // Move focus to input BELOW (pair - 1)
+                        // In both Kraepelin and Pauli, backspace goes to previous question (pair - 1)!
                         moveFocus(col, pair - 1);
                     }
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    moveFocus(col, pair + 1);
+                    if (state.testType === 'pauli') {
+                        // In Pauli, visually Up is pair - 1
+                        moveFocus(col, pair - 1);
+                    } else {
+                        // In Kraepelin, visually Up is pair + 1
+                        moveFocus(col, pair + 1);
+                    }
                 } else if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    moveFocus(col, pair - 1);
+                    if (state.testType === 'pauli') {
+                        // In Pauli, visually Down is pair + 1
+                        moveFocus(col, pair + 1);
+                    } else {
+                        // In Kraepelin, visually Down is pair - 1
+                        moveFocus(col, pair - 1);
+                    }
+                }
+            });
+
+            // Native mobile soft keyboard input event support
+            input.addEventListener('input', () => {
+                const col = parseInt(input.dataset.col);
+                const pair = parseInt(input.dataset.pair);
+
+                if (col !== state.currentColIndex) return;
+
+                const val = input.value;
+                if (/^[0-9]$/.test(val)) {
+                    input.classList.add('filled');
+                    state.userAnswers[col][pair] = parseInt(val);
+                    playSound('click');
+                    moveFocus(col, pair + 1);
+                } else if (val === '') {
+                    input.classList.remove('filled');
+                    state.userAnswers[col][pair] = null;
+                } else {
+                    const lastDigit = val.replace(/\D/g, '').slice(-1);
+                    if (lastDigit) {
+                        input.value = lastDigit;
+                        input.classList.add('filled');
+                        state.userAnswers[col][pair] = parseInt(lastDigit);
+                        playSound('click');
+                        moveFocus(col, pair + 1);
+                    } else {
+                        input.value = '';
+                        input.classList.remove('filled');
+                        state.userAnswers[col][pair] = null;
+                    }
                 }
             });
         });
     }
 
+    // Unified Virtual Keypad Input Handler
+    function handleKeypadInput(key) {
+        if (!state.isRunning || state.isPaused) return;
+
+        let activeInput = document.activeElement;
+        if (!activeInput || activeInput.tagName !== 'INPUT' || parseInt(activeInput.dataset.col) !== state.currentColIndex) {
+            const pairToTarget = (state.currentFocusedPair !== undefined && state.currentFocusedPair !== null)
+                ? state.currentFocusedPair
+                : 0;
+            activeInput = DOM.matrixContainer.querySelector(`input[data-col="${state.currentColIndex}"][data-pair="${pairToTarget}"]`);
+        }
+
+        if (!activeInput) return;
+
+        const col = parseInt(activeInput.dataset.col);
+        const pair = parseInt(activeInput.dataset.pair);
+
+        if (key >= '0' && key <= '9') {
+            activeInput.value = key;
+            activeInput.classList.add('filled');
+            state.userAnswers[col][pair] = parseInt(key);
+            playSound('click');
+            moveFocus(col, pair + 1);
+        } else if (key === 'Backspace') {
+            if (activeInput.value !== '') {
+                activeInput.value = '';
+                activeInput.classList.remove('filled');
+                state.userAnswers[col][pair] = null;
+            } else {
+                moveFocus(col, pair - 1);
+            }
+        }
+    }
+
     // Virtual Keypad Button Listeners
     const virtualKeys = DOM.virtualKeypad.querySelectorAll('.key-btn');
     virtualKeys.forEach(btn => {
+        // Prevent pointerdown from stealing input focus
+        btn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+        });
+
         btn.addEventListener('click', (e) => {
             e.preventDefault();
-            const activeInput = document.activeElement;
-            if (activeInput && activeInput.tagName === 'INPUT' && parseInt(activeInput.dataset.col) === state.currentColIndex) {
-                const key = btn.dataset.key;
-                const col = parseInt(activeInput.dataset.col);
-                const pair = parseInt(activeInput.dataset.pair);
-
-                if (key >= '0' && key <= '9') {
-                    activeInput.value = key;
-                    activeInput.classList.add('filled');
-                    state.userAnswers[col][pair] = parseInt(key);
-                    playSound('click');
-                    moveFocus(col, pair + 1);
-                } else if (key === 'Backspace') {
-                    if (activeInput.value !== '') {
-                        activeInput.value = '';
-                        activeInput.classList.remove('filled');
-                        state.userAnswers[col][pair] = null;
-                    } else {
-                        moveFocus(col, pair - 1);
-                    }
-                }
-            }
+            handleKeypadInput(btn.dataset.key);
         });
     });
 
     function moveFocus(col, targetPair) {
         const totalPairs = state.digitsPerColumn - 1;
         if (targetPair >= 0 && targetPair < totalPairs) {
+            state.currentFocusedPair = targetPair;
             const nextInput = DOM.matrixContainer.querySelector(`input[data-col="${col}"][data-pair="${targetPair}"]`);
             if (nextInput) {
                 nextInput.focus();
@@ -569,17 +808,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function focusBottomInputOfColumn(colIdx) {
-        const bottomInput = DOM.matrixContainer.querySelector(`input[data-col="${colIdx}"][data-pair="0"]`);
-        if (bottomInput) {
-            bottomInput.focus();
-            bottomInput.select();
+    function focusStartingInputOfColumn(colIdx) {
+        state.currentFocusedPair = 0;
+        // In both tests, the first question in column is data-pair="0"
+        const startInput = DOM.matrixContainer.querySelector(`input[data-col="${colIdx}"][data-pair="0"]`);
+        if (startInput) {
+            startInput.focus();
+            startInput.select();
             
-            // Auto scroll vertical wrapper to the bottom so the first question at the bottom is immediately visible!
             setTimeout(() => {
-                bottomInput.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'center' });
-                if (DOM.matrixWrapper) {
-                    DOM.matrixWrapper.scrollTop = DOM.matrixWrapper.scrollHeight;
+                if (state.testType === 'pauli') {
+                    // Pauli starts at the top
+                    startInput.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'center' });
+                    if (DOM.matrixWrapper) {
+                        DOM.matrixWrapper.scrollTop = 0;
+                    }
+                } else {
+                    // Kraepelin starts at the bottom
+                    startInput.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'center' });
+                    if (DOM.matrixWrapper) {
+                        DOM.matrixWrapper.scrollTop = DOM.matrixWrapper.scrollHeight;
+                    }
                 }
             }, 60);
         }
@@ -588,7 +837,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function scrollColumnToCenter(colIdx) {
         const colEl = document.getElementById(`col-${colIdx}`);
         if (colEl) {
-            colEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'end' });
+            const verticalBlock = (state.testType === 'pauli') ? 'start' : 'end';
+            colEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: verticalBlock });
         }
     }
 
@@ -603,6 +853,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Show Countdown Modal
         DOM.countdownModal.classList.remove('hidden');
+        if (DOM.countdownSub) {
+            DOM.countdownSub.innerText = state.testType === 'pauli'
+                ? 'Tes Pauli: penjumlahan dari atas ke bawah...'
+                : 'Tes Kraepelin: penjumlahan dari bawah ke atas...';
+        }
         let count = 3;
         DOM.countdownNumber.innerText = count;
         playSound('countdown');
@@ -630,7 +885,19 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.testStatsHeader.classList.remove('hidden');
 
         updateHeaderStats();
-        focusBottomInputOfColumn(0);
+        
+        // Update direction badge
+        if (DOM.directionIndicator) {
+            if (state.testType === 'pauli') {
+                DOM.directionIndicator.className = 'direction-badge badge-pauli';
+                DOM.directionIndicator.innerHTML = '<i class="fa-solid fa-arrow-down"></i> Atas ke Bawah';
+            } else {
+                DOM.directionIndicator.className = 'direction-badge badge-kraepelin';
+                DOM.directionIndicator.innerHTML = '<i class="fa-solid fa-arrow-up"></i> Bawah ke Atas';
+            }
+        }
+
+        focusStartingInputOfColumn(0);
         scrollColumnToCenter(0);
 
         startTimers();
@@ -722,7 +989,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             updateHeaderStats();
-            focusBottomInputOfColumn(state.currentColIndex);
+            focusStartingInputOfColumn(state.currentColIndex);
             scrollColumnToCenter(state.currentColIndex);
         }
     }
@@ -842,16 +1109,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // Evaluate Grade
         let grade = 'B';
         let gradeTitle = 'Performa Baik (Average Plus)';
-        let gradeSub = 'Kemampuan konsentrasi dan kecepatan kerja Anda berada pada level standar psikotes perusahaan.';
+        const testName = state.testType === 'pauli' ? 'Pauli' : 'Kraepelin';
+        let gradeSub = `Kemampuan konsentrasi dan kecepatan kerja Anda berada pada level standar psikotes ${testName}.`;
 
         if (accuracy >= 94 && pace >= 45) {
             grade = 'A';
             gradeTitle = 'Performa Sangat Baik (Superior)';
-            gradeSub = 'Selamat! Hasil simulasi tes Kraepelin Anda sangat memuaskan dan memenuhi kriteria seleksi perusahaan papan atas / BUMN.';
+            gradeSub = `Selamat! Hasil simulasi tes ${testName} Anda sangat memuaskan dan memenuhi kriteria seleksi perusahaan papan atas / BUMN.`;
         } else if (accuracy >= 85 && pace >= 30) {
             grade = 'B';
             gradeTitle = 'Performa Baik (Kompeten)';
-            gradeSub = 'Performa kerja stabil dengan akurasi yang terjaga. Pertahankan ritme saat ujian psikotes sesungguhnya.';
+            gradeSub = `Performa kerja stabil dengan akurasi yang terjaga. Pertahankan ritme saat ujian psikotes ${testName} sesungguhnya.`;
         } else if (accuracy >= 70 || pace >= 20) {
             grade = 'C';
             gradeTitle = 'Performa Cukup (Perlu Pembenahan)';
@@ -917,7 +1185,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Tips Evaluasi
-        DOM.analysisTips.innerText = `Gunakan Numpad keyboard dengan posisi jari yang rileks. Saat terdengar sinyal "PINDAH!", langsung alihkan pandangan mata ke angka paling bawah pada kolom berikutnya tanpa memikirkan jawaban yang terlewati.`;
+        const targetDirectionWord = state.testType === 'pauli' ? 'angka paling atas' : 'angka paling bawah';
+        DOM.analysisTips.innerText = `Gunakan Numpad keyboard dengan posisi jari yang rileks. Saat terdengar sinyal "PINDAH!", langsung alihkan pandangan mata ke ${targetDirectionWord} pada kolom berikutnya tanpa memikirkan jawaban yang terlewati.`;
     }
 
     function renderBreakdownTable() {
@@ -979,7 +1248,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 labels: labels,
                 datasets: [
                     {
-                        label: 'Total Dijawab',
+                        label: `Total Dijawab (${state.testType === 'pauli' ? 'Pauli' : 'Kraepelin'})`,
                         data: totalAnsweredData,
                         borderColor: '#6366f1',
                         backgroundColor: gradientTotal,
