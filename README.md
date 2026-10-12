@@ -2,6 +2,7 @@
 
 Aplikasi web **Kraepelin Test Simulator** dirancang secara khusus untuk persiapan dan latihan ujian psikotes seleksi penerimaan kerja perusahaan (BUMN, Perbankan, Swasta, serta CPNS). Aplikasi ini memberikan pengalaman pengerjaan tes penjumlahan kolom vertikal yang realistis sesuai dengan standar ujian psikotes psikologi kerja.
 
+Kamu bisa memainkan simulasi ini pada kraeplinpaulisimulator.vercel.app
 ---
 
 ## 🚀 Fitur Utama
